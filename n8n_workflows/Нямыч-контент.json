@@ -1,0 +1,393 @@
+{
+  "name": "Нямыч-контент",
+  "nodes": [
+    {
+      "parameters": {
+        "fileSelector": "=/home/node/.n8n-files/{{ $json.fileName }}",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        32
+      ],
+      "id": "41245d13-d2f0-4a99-853e-ba58db10d619",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        32
+      ],
+      "id": "2c9271bd-ee4e-4392-acd9-a7e5fba0516f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "search",
+        "workspaceId": {
+          "__rl": true,
+          "value": "wuzpioej",
+          "mode": "list",
+          "cachedResultName": "Default Workspace",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej"
+        },
+        "projectId": {
+          "__rl": true,
+          "value": "p5hhsrdv1chre6m",
+          "mode": "list",
+          "cachedResultName": "nyamych_content",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej/p5hhsrdv1chre6m"
+        },
+        "table": {
+          "__rl": true,
+          "value": "m0shqmekv19cqfe",
+          "mode": "list",
+          "cachedResultName": "news",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej/p5hhsrdv1chre6m/m0shqmekv19cqfe"
+        },
+        "options": {
+          "where": "(is_published,eq,true)"
+        }
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 4,
+      "position": [
+        224,
+        336
+      ],
+      "id": "a1d5c7e1-7e1c-4120-9224-83f776f4f466",
+      "name": "Search rows",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "9VrbFqyVFnoEroYC",
+          "name": "NocoDB Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "nyamych-news",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://nyam.medvejka.ru"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        336
+      ],
+      "id": "ea66b2b7-482f-47e8-b978-9ab145af4a84",
+      "name": "news",
+      "webhookId": "5e867bf2-d26f-4d73-8fef-96819879aedb"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nyamych-doc",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://nyam.medvejka.ru"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        32
+      ],
+      "id": "f5282e19-431c-4428-9172-fec79d1b4f26",
+      "name": "docs",
+      "webhookId": "5e867bf2-d26f-4d73-8fef-96819879aedb"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { news: $json.news } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        656,
+        336
+      ],
+      "id": "0d198a40-3c24-4058-9f81-036250233e1b",
+      "name": "Respond to news"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {content: $json.content } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        800,
+        32
+      ],
+      "id": "0f7c59d7-3fc0-4f45-8fea-df2b8237c990",
+      "name": "Respond to docs"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "search",
+        "workspaceId": {
+          "__rl": true,
+          "value": "wuzpioej",
+          "mode": "list",
+          "cachedResultName": "Default Workspace",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej"
+        },
+        "projectId": {
+          "__rl": true,
+          "value": "p5hhsrdv1chre6m",
+          "mode": "list",
+          "cachedResultName": "nyamych_content",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej/p5hhsrdv1chre6m"
+        },
+        "table": {
+          "__rl": true,
+          "value": "mml975v6iyv2k8w",
+          "mode": "list",
+          "cachedResultName": "employee_of_month",
+          "cachedResultUrl": "https://nocodb.medvejka.ru/#/wuzpioej/p5hhsrdv1chre6m/mml975v6iyv2k8w"
+        },
+        "downloadAttachments": true,
+        "downloadFieldNames": [
+          "photo"
+        ],
+        "options": {
+          "where": "(is_published,eq,true)"
+        }
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 4,
+      "position": [
+        240,
+        592
+      ],
+      "id": "602a5b9a-e7ed-46b5-b1c5-e6cdabfe90cc",
+      "name": "Search rows1",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "9VrbFqyVFnoEroYC",
+          "name": "NocoDB Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "nyamych-employees",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://nyam.medvejka.ru"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        592
+      ],
+      "id": "4b9d29b7-b0a5-4845-abed-2feac3b27d61",
+      "name": "employees",
+      "webhookId": "5e867bf2-d26f-4d73-8fef-96819879aedb"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { employees: $json.employees } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        592
+      ],
+      "id": "4a07162c-f2e1-4844-b95e-9e4cd241c7a5",
+      "name": "Respond to employees"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst news = items.map(item => ({\n  title: item.json.fields.Title,\n  text: item.json.fields.text,\n  date: item.json.fields.date\n}));\n\nreturn [{ json: { news } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        336
+      ],
+      "id": "799a7daa-ffbb-44a0-b333-78a0fdbb116c",
+      "name": "Code_news"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawName = $input.first().json.body?.file || \"\";\n\n// убираем всё, кроме букв (в т.ч. кириллицы), цифр, точки, подчёркивания и дефиса\nconst safeName = rawName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9._-]/g, \"\");\n\nif (!safeName.endsWith(\".md\") || safeName.includes(\"..\")) {\n  throw new Error(\"Недопустимое имя файла: \" + rawName);\n}\n\nreturn [{ json: { fileName: safeName } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        32
+      ],
+      "id": "f5add5a6-c43d-4c9c-b52c-1bd8236f46db",
+      "name": "Code_docs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst employee = items.map(item => {\n  const f = item.json.fields;\n  const photoArr = f.photo || [];\n  const photoUrl = photoArr.length > 0\n    ? (photoArr[0].signedUrl || photoArr[0].url || photoArr[0].path)\n    : null;\n\n  return {\n    name: f.name,\n    point: f.point,\n    comment: f.comment,\n    period: f.period,\n    photo: photoUrl\n  };\n});\n\nreturn [{ json: { employee } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        592
+      ],
+      "id": "33de3b3a-9694-427a-9204-37cc29fad84f",
+      "name": "Code_employees"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Respond to docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search rows": {
+      "main": [
+        [
+          {
+            "node": "Code_news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "news": {
+      "main": [
+        [
+          {
+            "node": "Search rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "docs": {
+      "main": [
+        [
+          {
+            "node": "Code_docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search rows1": {
+      "main": [
+        [
+          {
+            "node": "Code_employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "employees": {
+      "main": [
+        [
+          {
+            "node": "Search rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_news": {
+      "main": [
+        [
+          {
+            "node": "Respond to news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_docs": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_employees": {
+      "main": [
+        [
+          {
+            "node": "Respond to employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9b8c2423-2495-49e5-bdfb-40b903ab448b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "89bf411f2c9407d50451f240e0dc51ca73610314049e7cc825977ec9062b1561"
+  },
+  "nodeGroups": [],
+  "id": "cTWdpzwgrm9wzqFo",
+  "tags": []
+}
