@@ -667,7 +667,7 @@
 
   function loadNews() {
     if (!WEBHOOK_NEWS_URL) return;
-    fetch(WEBHOOK_NEWS_URL)
+    fetch(WEBHOOK_NEWS_URL, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         const items = data.news || [];
@@ -687,7 +687,7 @@
 
   function loadEmployee() {
     if (!WEBHOOK_EMPLOYEE_URL) return;
-    fetch(WEBHOOK_EMPLOYEE_URL)
+    fetch(WEBHOOK_EMPLOYEE_URL, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         const emp = (data.employee || [])[0];
@@ -712,14 +712,18 @@
 
   function loadAssets() {
     if (!WEBHOOK_ASSETS_URL) return;
-    fetch(WEBHOOK_ASSETS_URL)
+    fetch(WEBHOOK_ASSETS_URL, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         const a = data.assets || {};
         const logo = document.getElementById("site-logo");
         const photo = document.getElementById("nyamych-photo");
+        const photoUrl = a.assistant_photo || a.nyamych_photo || a.photo || "";
         if (logo && a.logo) logo.src = a.logo;
-        if (photo && a.nyamych_photo) photo.src = a.nyamych_photo;
+        if (photo && photoUrl) {
+          photo.src = photoUrl;
+          photo.onerror = () => console.warn("Нямыч-фото не загрузилось:", photoUrl);
+        }
       })
       .catch(() => { /* лого/фото не загрузились — иконки просто останутся пустыми */ });
   }
