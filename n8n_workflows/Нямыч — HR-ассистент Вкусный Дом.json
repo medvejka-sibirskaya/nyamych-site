@@ -89,7 +89,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const SYSTEM_PROMPT = `# Роль\nТы — Нямыч, внутренний помощник сети ресторанов «Вкусный Дом».\nТы как опытный коллега, к которому все идут за советом — спокойный,\nсвойский, всегда готов помочь, без формальной \"казёнщины\".\n\n# Задача\nОтвечай сотрудникам на вопросы о правилах, процедурах, графиках,\nстандартах сервиса и рабочих регламентах компании — опираясь\nисключительно на базу знаний.\n\n# Правила\n- Обращайся к сотруднику всегда на «Вы» (с большой буквы) — вежливо, но без канцелярской сухости. Никогда не переходи на «ты», даже если сотрудник сам пишет неформально.\n- Отвечай кратко, по делу, дружелюбным тоном — как человек с опытом,\n  а не инструкция.\n- Всегда указывай источник информации (документ и, если есть,\n  статью закона).\n- Если вопрос касается изменений в законодательстве — упоминай дату\n  актуализации документа и советуй уточнить у HR при малейшем сомнении.\n- Если не знаешь ответа или информации нет в базе знаний — скажи честно\n  и направь к HR-менеджеру. Никогда не придумывай ответ.\n- Сложные, спорные или персональные случаи (индивидуальные трудовые\n  споры, вопросы про чью-то конкретную зарплату) — сразу передавай HR.\n- Не давай юридических консультаций за рамками внутренних регламентов\n  компании.\n\n# Формат ответа\nКороткий абзац или список из 2-4 пунктов. Без длинных вступлений.\nВ конце — ссылка на документ-источник в формате: (Источник: название_документа.md)`;\n\n// Берём вопрос и chat_id НЕ из текущего $json (там уже данные Qdrant,\n// а не исходное сообщение), а напрямую из более раннего узла —\n// того же принципа, что уже применён в OUT_Telegram_Reply.\nconst originalData = $('CORE_Validate_Input').item.json;\nconst question = originalData.question || 'Вопрос не указан';\nconst chat_id = originalData.chat_id;\n\n// Результаты поиска Qdrant — они сейчас как раз в $input\nconst results = $input.all();\n\nlet context = '';\nif (Array.isArray(results) && results.length > 0) {\n  context = results\n    .map(r => {\n      const text = r.json?.document?.pageContent || '';\n      const source = r.json?.document?.metadata?.source\n                  || r.json?.document?.metadata?.file_name || '';\n      if (!text) return '';\n      return source ? `[${source}]:\\n${text}` : text;\n    })\n    .filter(Boolean)\n    .join('\\n\\n---\\n\\n');\n}\n\nconst final_prompt = `${SYSTEM_PROMPT}\n\nКонтекст из базы знаний:\n${context || 'В базе знаний не нашлось релевантной информации по этому вопросу.'}\n\nВопрос сотрудника: ${question}`;\n\nconst escaped_prompt = JSON.stringify(final_prompt).slice(1, -1);\n\nreturn [{\n  json: {\n    chat_id,\n    question,\n    final_prompt: escaped_prompt\n  }\n}];"
+        "jsCode": "const SYSTEM_PROMPT = `# Роль\nТы — Нямыч, внутренний помощник сети ресторанов «Вкусный Дом».\nТы как опытный коллега, к которому все идут за советом — спокойный,\nсвойский, всегда готов помочь, без формальной \"казёнщины\".\n\n# Задача\nОтвечай сотрудникам на вопросы о правилах, процедурах, графиках,\nстандартах сервиса и рабочих регламентах компании — опираясь\nисключительно на базу знаний.\n\n# Правила\n- Обращайся к сотруднику всегда на «Вы» (с большой буквы) — вежливо, но без канцелярской сухости. Никогда не переходи на «ты», даже если сотрудник сам пишет неформально.\n- Отвечай кратко, по делу, дружелюбным тоном — как человек с опытом,\n  а не инструкция.\n- Всегда указывай источник информации (документ и, если есть,\n  статью закона).\n- Если вопрос касается изменений в законодательстве — упоминай дату\n  актуализации документа и советуй уточнить у HR при малейшем сомнении.\n- Если не знаешь ответа или информации нет в базе знаний — скажи честно\n  и направь к HR-менеджеру. Никогда не придумывай ответ.\n- Сложные, спорные или персональные случаи (индивидуальные трудовые\n  споры, вопросы про чью-то конкретную зарплату) — сразу передавай HR.\n- Не давай юридических консультаций за рамками внутренних регламентов\n  компании.\n\n# Формат ответа\nКороткий абзац или список из 2-4 пунктов. Без длинных вступлений.\nВ конце — ссылка на документ-источник в формате: (Источник: название_документа.md)`;\n\n// Берём вопрос и chat_id НЕ из текущего $json (там уже данные Qdrant,\n// а не исходное сообщение), а напрямую из более раннего узла —\n// того же принципа, что уже применён в OUT_Telegram_Reply.\nconst originalData = $('CORE_Validate_Input').item.json;\nconst question = originalData.question || 'Вопрос не указан';\nconst chat_id = originalData.chat_id;\n\n// Результаты поиска Qdrant — они сейчас как раз в $input\nconst results = $input.all();\n\nlet context = '';\nif (Array.isArray(results) && results.length > 0) {\n  context = results\n    .map(r => {\n      const text = r.json?.document?.pageContent || '';\n      const source = r.json?.document?.metadata?.source\n                  || r.json?.document?.metadata?.file_name || '';\n      if (!text) return '';\n      return source ? `[${source}]:\\n${text}` : text;\n    })\n    .filter(Boolean)\n    .join('\\n\\n---\\n\\n');\n}\n\nconst final_prompt = `${SYSTEM_PROMPT}\n\nКонтекст из базы знаний:\n${context || 'В базе знаний не нашлось релевантной информации по этому вопросу.'}\n\nВопрос сотрудника: ${question}`;\n\nconst escaped_prompt = JSON.stringify(final_prompt).slice(1, -1);\n// Экранируем вопрос тем же приёмом, что final_prompt: иначе сырой перенос/кавычка\n// в вопросе ломает JSON-тело запроса к OpenAI (Bad control character in string literal).\nconst escaped_question = JSON.stringify(question).slice(1, -1);\n\nreturn [{\n  json: {\n    chat_id,\n    question,\n    final_prompt: escaped_prompt,\n    question_escaped: escaped_question\n  }\n}];"
       },
       "id": "a86b764e-dd84-4b25-9728-cf97bfbfda00",
       "name": "CORE_Build_Prompt",
@@ -103,71 +103,20 @@
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "string": [
-                  {
-                    "value1": "={{$vars.active_provider}}",
-                    "value2": "openai"
-                  }
-                ],
-                "combinator": "and",
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
-                }
-              }
-            },
-            {
-              "conditions": {
-                "string": [
-                  {
-                    "value1": "={{$vars.active_provider}}",
-                    "value2": "yandex"
-                  }
-                ],
-                "combinator": "and",
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
-                }
-              }
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "8f1df161-a1eb-4ea1-8e04-c8f96a72f76a",
-      "name": "CORE_LLM_Router",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [
-        1328,
-        80
-      ],
-      "notes": "Маршрутизация по активному провайдеру из config.json (active_provider)."
-    },
-    {
-      "parameters": {
         "method": "=POST",
         "url": "https://api.proxyapi.ru/openai/v1/chat/completions",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"{{$json.final_prompt}}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.question}}\"\n    }\n  ],\n  \"temperature\": 0.2,\n  \"max_tokens\": 500\n}",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"{{$json.final_prompt}}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.question_escaped}}\"\n    }\n  ],\n  \"temperature\": 0.2,\n  \"max_tokens\": 500\n}",
         "options": {
           "response": {
             "response": {
               "fullResponse": true
             }
-          }
+          },
+          "timeout": 30000
         }
       },
       "id": "17efefc9-7f72-4285-82a1-f23f318ff73e",
@@ -193,55 +142,6 @@
         }
       },
       "notes": "Доступ ТОЛЬКО через proxyAPI — прямого доступа к OpenAI из РФ нет."
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "yandexKeyApi",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "modelUri",
-              "value": "=gpt://{{$credentials.yandexApi.folderId}}/yandexgpt-lite"
-            },
-            {
-              "name": "completionOptions",
-              "value": "={\"temperature\":0.2,\"maxTokens\":500}"
-            },
-            {
-              "name": "messages",
-              "value": "=[{\"role\":\"system\",\"text\":\"{{$json.final_prompt}}\"}]"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "cc2806d3-728c-433b-84cc-e5d7773d3cf4",
-      "name": "CORE_LLM_Call_Yandex_Direct",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1552,
-        208
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "dR4LIzaHauX65vfo",
-          "name": "Header Auth account"
-        },
-        "httpBearerAuth": {
-          "id": "2YKgPYH4peLKiIWL",
-          "name": "nyammy_ya"
-        },
-        "yandexKeyApi": {
-          "id": "ihx8o1b4BpRTQ9lg",
-          "name": "Yandex account"
-        }
-      },
-      "notes": "Прямой доступ (без прокси) — YandexGPT легально доступен из РФ."
     },
     {
       "parameters": {
@@ -705,25 +605,7 @@
       "main": [
         [
           {
-            "node": "CORE_LLM_Router",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CORE_LLM_Router": {
-      "main": [
-        [
-          {
             "node": "CORE_LLM_Call_OpenAI_Proxy",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "CORE_LLM_Call_Yandex_Direct",
             "type": "main",
             "index": 0
           }
@@ -735,17 +617,6 @@
         [
           {
             "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CORE_LLM_Call_Yandex_Direct": {
-      "main": [
-        [
-          {
-            "node": "CORE_Save_Checkpoint",
             "type": "main",
             "index": 0
           }
