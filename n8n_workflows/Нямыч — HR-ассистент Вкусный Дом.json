@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nconst input = raw.body || raw;\n\nlet chat_id, message_id, question, channel;\n\nif (input.message) {\n  // Пришло из Telegram\n  chat_id = input.message.chat.id;\n  message_id = input.message.message_id;\n  question = input.message.text;\n  channel = 'telegram';\n} else {\n  // Пришло с сайта: { question, chat_id }\n  chat_id = input.chat_id;\n  question = input.question;\n  message_id = chat_id + '_' + Date.now();\n  channel = 'web';\n}\n\nif (!question) {\n  throw new Error('Пустое сообщение');\n}\n\nreturn [{ json: { chat_id, message_id, question, channel } }];"
+        "jsCode": "const raw = $input.first().json;\nconst input = raw.body || raw;\nconst headers = raw.headers || {};\n\nlet chat_id, message_id, question, channel;\n\nif (input.message) {\n  // Пришло из Telegram\n  chat_id = input.message.chat.id;\n  message_id = input.message.message_id;\n  question = input.message.text;\n  channel = 'telegram';\n} else {\n  // Пришло с сайта: { question, chat_id }\n  chat_id = input.chat_id;\n  question = input.question;\n  message_id = chat_id + '_' + Date.now();\n  channel = 'web';\n}\n\n// IP пользователя (заголовок прокси) — нужен для лимита вопросов по адресу\nconst user_ip = String(headers['x-forwarded-for'] || headers['x-real-ip'] || '')\n  .split(',')[0].trim();\n\nif (!question) {\n  throw new Error('Пустое сообщение');\n}\n\nreturn [{ json: { chat_id, message_id, question, channel, user_ip } }];"
       },
       "id": "ddc16cf3-4422-4da3-a8fb-d18f5ef4bc46",
       "name": "CORE_Validate_Input",
@@ -451,7 +451,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { answer_text: $json.answer_text } }}",
+        "responseBody": "={{ { answer_text: $json.answer_text, rate_left: $('UTIL_Rate_Limit').first().json.rate_left } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -552,6 +552,66 @@
       "typeVersion": 1,
       "id": "f8d385d1-d22c-452f-a9cf-733b64f52f85",
       "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Лимит: не более 5 вопросов на одного пользователя веб-канала за всё время.\n// Счётчик — в статическом хранилище workflow (сохраняется в БД n8n,\n// сбрасывается только при деактивации/переактивации workflow).\n// Проверка стоит перед вызовом LLM — заблокированный пользователь не тратит токены.\nconst LIMIT = 5;\nconst LIMIT_MESSAGE = \"Ваш лимит вопросов исчерпан. Обратитесь, пожалуйста, к администратору.\";\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.rateLimits) staticData.rateLimits = {};\n\nconst item = $input.first().json;\n\n// Ограничиваем только анонимный веб-канал (Telegram-бот для сотрудников — без лимита)\nif (item.channel !== 'web') {\n  return [{ json: item }];\n}\n\n// Ключ пользователя: сначала IP (устойчивее), иначе постоянный chat_id виджета\nconst ip = String(item.user_ip || '').trim();\nconst key = ip ? 'ip_' + ip : 'cid_' + item.chat_id;\n\nconst used = staticData.rateLimits[key] || 0;\n\nif (used >= LIMIT) {\n  // Лимит исчерпан — отвечаем мимо LLM и базы знаний\n  return [{ json: {\n    ...item,\n    rate_blocked: true,\n    rate_left: 0,\n    answer_text: LIMIT_MESSAGE\n  } }];\n}\n\nstaticData.rateLimits[key] = used + 1;\n\nreturn [{ json: { ...item, rate_blocked: false, rate_left: LIMIT - used - 1 } }];"
+      },
+      "id": "4062fdf8-d215-4240-8a55-6ace4eafd643",
+      "name": "UTIL_Rate_Limit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7bc5e9f1-23dc-4b81-836a-64a0d87c6ec1",
+              "leftValue": "={{ $json.rate_blocked }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7c8a4614-4a9f-4e1a-8552-ef055b99bc72",
+      "name": "UTIL_If_Rate_Blocked",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1056,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Лимит вопросов (web)\n\nНе более **5 вопросов на пользователя за всё время**.\nКлюч: IP (`x-forwarded-for`) или `chat_id` виджета.\nСчётчик в staticData. Внимание: деактивация + активация workflow **сбрасывает счётчики**.\nTelegram-канал не ограничивается."
+      },
+      "id": "97121f30-c7df-4c67-81fe-3cdb8e15bfa8",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        380
+      ]
     }
   ],
   "pinData": {},
@@ -594,7 +654,7 @@
         [],
         [
           {
-            "node": "Qdrant Vector Store",
+            "node": "UTIL_Rate_Limit",
             "type": "main",
             "index": 0
           }
@@ -706,6 +766,35 @@
         [
           {
             "node": "OUT_Webhook_Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UTIL_Rate_Limit": {
+      "main": [
+        [
+          {
+            "node": "UTIL_If_Rate_Blocked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UTIL_If_Rate_Blocked": {
+      "main": [
+        [
+          {
+            "node": "OUT_Webhook_Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Qdrant Vector Store",
             "type": "main",
             "index": 0
           }

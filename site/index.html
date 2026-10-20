@@ -651,7 +651,18 @@
   const WEBHOOK_NEWS_URL = "https://n8n.medvejka.ru/webhook/nyamych-news";
   const WEBHOOK_EMPLOYEE_URL = "https://n8n.medvejka.ru/webhook/nyamych-employee";
   const WEBHOOK_ASSETS_URL = "https://n8n.medvejka.ru/webhook/assets";
-  const sessionId = "web_" + Math.random().toString(36).slice(2, 10);
+  // Постоянный ID пользователя: сохраняется в localStorage, чтобы счётчик
+  // вопросов считался по человеку, а не по каждой загрузке страницы
+  const sessionId = (function () {
+    try {
+      return localStorage.getItem("nyamych_sid") ||
+             ("web_" + Math.random().toString(36).slice(2, 10));
+    } catch (e) {
+      return "web_" + Math.random().toString(36).slice(2, 10);
+    }
+  })();
+  try { localStorage.setItem("nyamych_sid", sessionId); } catch (e) {}
+  const RATE_LIMIT = 5;
 
   function escapeHtml(str) {
     const div = document.createElement("div");
@@ -823,6 +834,15 @@
     const input = document.getElementById("chat-input");
     const text = input.value.trim();
     if (!text) return;
+
+    // Клиентская копия лимита — чтобы 6-й вопрос даже не уходил на сервер
+    let used = 0;
+    try { used = parseInt(localStorage.getItem("nyamych_used") || "0", 10) || 0; } catch (e) {}
+    if (used >= RATE_LIMIT) {
+      addMessage("Ваш лимит вопросов исчерпан. Обратитесь, пожалуйста, к администратору.", "bot");
+      return;
+    }
+
     addMessage(text, "user");
     input.value = "";
     if (!WEBHOOK_URL) {
@@ -839,6 +859,18 @@
       });
       const data = await res.json();
       addMessage(data.answer_text || "Не удалось получить ответ.", "bot", data.source);
+
+      // Сверяем счётчик с сервером; когда остался последний вопрос — предупреждаем
+      if (typeof data.rate_left === "number") {
+        used = RATE_LIMIT - data.rate_left;
+        try { localStorage.setItem("nyamych_used", String(used)); } catch (e) {}
+        if (data.rate_left === 1) {
+          addMessage("Подсказка: остался последний вопрос.", "bot");
+        }
+      } else {
+        used += 1;
+        try { localStorage.setItem("nyamych_used", String(used)); } catch (e) {}
+      }
     } catch (err) {
       addMessage("Упс, не получилось связаться с сервером. Попробуй ещё раз чуть позже.", "bot");
     }
