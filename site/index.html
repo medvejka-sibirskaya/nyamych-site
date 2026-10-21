@@ -372,8 +372,10 @@
   }
 
   @media (max-width: 600px) {
-    header { padding: 1.2rem 1.4rem; }
-    header nav { gap: 1rem; }
+    /* Шапка: бренд и навигация переносятся на отдельные строки,
+       иначе суммарная ширина вылезает за экран и появляется горизонтальный скролл */
+    header { padding: 1.2rem 1.4rem; flex-wrap: wrap; row-gap: 0.7rem; }
+    header nav { gap: 0.4rem 1rem; font-size: 0.85rem; flex-wrap: wrap; }
     .hero { padding: 4rem 1.4rem 3rem; }
     .menu-section { padding: 0 1.4rem 3rem; }
     /* Сотрудник месяца: на телефоне карточка складывается вертикально,
